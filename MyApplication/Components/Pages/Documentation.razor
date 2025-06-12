@@ -1,0 +1,777 @@
+@page "/docs"
+@using MyApplication.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@layout MyApplication.Components.Layout.MainLayout
+
+<PageTitle>Documentation - ระบบขออนุญาตเมีย</PageTitle>
+
+@if (!AuthService.IsAuthenticated)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        กรุณาเข้าสู่ระบบก่อนใช้งาน
+    </MudAlert>
+    Navigation.NavigateTo("/login");
+    return;
+}
+
+@if (AuthService.CurrentUser?.Role != "เมีย")
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="pt-16">
+        <MudPaper Elevation="3" Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Block" Size="Size.Large" Color="Color.Error" />
+            <MudText Typo="Typo.h5" Color="Color.Error" Class="mb-4">
+                ไม่มีสิทธิ์เข้าถึง
+            </MudText>
+            <MudText Typo="Typo.body1">
+                หน้านี้สำหรับเมียเท่านั้น! 👑<br/>
+                สามีไม่มีสิทธิ์เข้ามาดู 😅
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/dashboard" Class="mt-4">
+                กลับไปหน้า Dashboard
+            </MudButton>
+        </MudPaper>
+    </MudContainer>
+    return;
+}
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudPaper Elevation="3" Class="pa-6" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <MudStack Spacing="4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" Color="Color.Warning" />
+                <MudText Typo="Typo.h4" Color="Color.Warning">
+                    📚 Documentation - ระบบขออนุญาตเมีย
+                </MudText>
+            </MudStack>
+
+            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Info">
+                <MudText>
+                    เอกสารประกอบระบบสำหรับผู้ดูแลระบบ (เมีย) 💕
+                </MudText>
+            </MudAlert>
+
+            <!-- Tabs -->
+            <MudTabs Elevation="3" Rounded="true" Color="Color.Primary" PanelClass="pa-6">
+                
+                <!-- API Documentation Tab -->
+                <MudTabPanel Text="🔗 API Documentation">
+                    <MudStack Spacing="4">
+                        <MudText Typo="Typo.h5" Color="Color.Primary">
+                            API Specification - ระบบขออนุญาตเมีย
+                        </MudText>
+                        
+                        <MudText Typo="Typo.body1">
+                            <strong>Base URL:</strong> https://wife-permission-system.com/api/v1
+                        </MudText>
+
+                        <!-- Authentication -->
+                        <MudExpansionPanels Elevation="3">
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Security" class="mr-3" />
+                                        <MudText>🔐 Authentication</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">POST /auth/login</MudText>
+                                        <MudCodeHighlight Language="json">
+{
+  "username": "string",
+  "password": "string"
+}
+
+Response:
+{
+  "token": "jwt_token_here",
+  "user": {
+    "id": 1,
+    "username": "เมีย",
+    "displayName": "คุณเมีย",
+    "role": "เมีย"
+  }
+}
+                                        </MudCodeHighlight>
+                                        
+                                        <MudText Typo="Typo.h6">POST /auth/logout</MudText>
+                                        <MudCodeHighlight Language="json">
+Response: 
+{
+  "message": "Logged out successfully"
+}
+                                        </MudCodeHighlight>
+                                    </MudStack>
+                                </ChildContent>
+                            </MudExpansionPanel>
+
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Assignment" class="mr-3" />
+                                        <MudText>📝 Requests API</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudStack Spacing="3">
+                                        <MudText Typo="Typo.h6">GET /requests</MudText>
+                                        <MudText Typo="Typo.body2">ดึงคำขอทั้งหมด (Admin เท่านั้น)</MudText>
+                                        <MudCodeHighlight Language="json">
+Response:
+[
+  {
+    "id": 1,
+    "name": "วัยวาย",
+    "date": "2025-06-15",
+    "time": "18:00",
+    "place": "ร้านหมูกระทะ",
+    "reason": "นัดเพื่อนเก่าสมัยมัธยม",
+    "status": "รอ",
+    "createdDate": "2025-06-14T10:00:00Z"
+  }
+]
+                                        </MudCodeHighlight>
+
+                                        <MudText Typo="Typo.h6">GET /requests/user/{username}</MudText>
+                                        <MudText Typo="Typo.body2">ดึงคำขอของผู้ใช้คนนั้น</MudText>
+
+                                        <MudText Typo="Typo.h6">POST /requests</MudText>
+                                        <MudText Typo="Typo.body2">สร้างคำขอใหม่</MudText>
+                                        <MudCodeHighlight Language="json">
+{
+  "name": "วัยวาย",
+  "date": "2025-06-15",
+  "time": "18:00",
+  "place": "ร้านหมูกระทะ",
+  "reason": "นัดเพื่อนเก่าสมัยมัธยม"
+}
+
+Response:
+{
+  "id": 51,
+  "message": "Request created successfully"
+}
+                                        </MudCodeHighlight>
+
+                                        <MudText Typo="Typo.h6">PUT /requests/{id}/status</MudText>
+                                        <MudText Typo="Typo.body2">อัปเดตสถานะคำขอ (Admin เท่านั้น)</MudText>
+                                        <MudCodeHighlight Language="json">
+{
+  "status": "อนุมัติ" // หรือ "ไม่อนุญาต"
+}
+
+Response:
+{
+  "message": "Status updated successfully"
+}
+                                        </MudCodeHighlight>
+                                    </MudStack>
+                                </ChildContent>
+                            </MudExpansionPanel>
+
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.BarChart" class="mr-3" />
+                                        <MudText>📊 Statistics API</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudStack Spacing="2">
+                                        <MudText Typo="Typo.h6">GET /statistics/dashboard</MudText>
+                                        <MudText Typo="Typo.body2">สถิติสำหรับ Admin Dashboard</MudText>
+                                        <MudCodeHighlight Language="json">
+Response:
+{
+  "totalRequests": 50,
+  "pendingRequests": 12,
+  "approvedRequests": 28,
+  "rejectedRequests": 10,
+  "userStatistics": [
+    {
+      "username": "วัยวาย",
+      "total": 15,
+      "pending": 3,
+      "approved": 10,
+      "rejected": 2
+    }
+  ]
+}
+                                        </MudCodeHighlight>
+                                    </MudStack>
+                                </ChildContent>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudStack>
+                </MudTabPanel>
+
+                <!-- Database Documentation Tab -->
+                <MudTabPanel Text="🗄️ Database Schema">
+                    <MudStack Spacing="4">
+                        <MudText Typo="Typo.h5" Color="Color.Primary">
+                            Database Schema - ระบบขออนุญาตเมีย
+                        </MudText>
+
+                        <MudAlert Severity="Severity.Info">
+                            ระบบใช้ JSON File Storage สำหรับจัดเก็บข้อมูล แต่หากต้องการใช้ Database จริง ใช้ Schema นี้
+                        </MudAlert>
+
+                        <!-- Mermaid ERD -->
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">📋 Entity Relationship Diagram</MudText>
+                            <div id="mermaid-erd">
+                                <pre class="mermaid">
+erDiagram
+    USERS {
+        int id PK
+        varchar username UK
+        varchar password
+        varchar display_name
+        varchar role
+        datetime created_date
+        datetime updated_date
+    }
+    
+    REQUESTS {
+        int id PK
+        varchar name
+        date request_date
+        time request_time
+        varchar place
+        text reason
+        varchar status
+        datetime created_date
+        datetime updated_date
+        int created_by FK
+        int approved_by FK
+    }
+    
+    REQUEST_HISTORY {
+        int id PK
+        int request_id FK
+        varchar old_status
+        varchar new_status
+        varchar changed_by
+        datetime changed_date
+        text comments
+    }
+    
+    SESSIONS {
+        int id PK
+        int user_id FK
+        varchar session_token
+        datetime expires_at
+        datetime created_date
+    }
+
+    USERS ||--o{ REQUESTS : creates
+    USERS ||--o{ REQUEST_HISTORY : changes
+    USERS ||--o{ SESSIONS : has
+    REQUESTS ||--o{ REQUEST_HISTORY : tracks
+                                </pre>
+                            </div>
+                        </MudPaper>
+
+                        <!-- Tables Detail -->
+                        <MudExpansionPanels Elevation="3">
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" class="mr-3" />
+                                        <MudText>👥 USERS Table</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudSimpleTable Style="overflow-x: auto;">
+                                        <thead>
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Constraint</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>id</td><td>INT</td><td>PRIMARY KEY, AUTO_INCREMENT</td><td>User ID</td></tr>
+                                            <tr><td>username</td><td>VARCHAR(50)</td><td>UNIQUE, NOT NULL</td><td>Username สำหรับ login</td></tr>
+                                            <tr><td>password</td><td>VARCHAR(255)</td><td>NOT NULL</td><td>Password (hashed)</td></tr>
+                                            <tr><td>display_name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>ชื่อแสดงผล</td></tr>
+                                            <tr><td>role</td><td>ENUM('เมีย','สามี','guest')</td><td>NOT NULL</td><td>บทบาทในระบบ</td></tr>
+                                            <tr><td>created_date</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>วันที่สร้าง</td></tr>
+                                            <tr><td>updated_date</td><td>DATETIME</td><td>ON UPDATE CURRENT_TIMESTAMP</td><td>วันที่อัปเดต</td></tr>
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </ChildContent>
+                            </MudExpansionPanel>
+
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Assignment" class="mr-3" />
+                                        <MudText>📝 REQUESTS Table</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudSimpleTable Style="overflow-x: auto;">
+                                        <thead>
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Constraint</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>id</td><td>INT</td><td>PRIMARY KEY, AUTO_INCREMENT</td><td>Request ID</td></tr>
+                                            <tr><td>name</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>ชื่อผู้ขออนุญาต</td></tr>
+                                            <tr><td>request_date</td><td>DATE</td><td>NOT NULL</td><td>วันที่จะออกไป</td></tr>
+                                            <tr><td>request_time</td><td>TIME</td><td>NOT NULL</td><td>เวลาที่จะออกไป</td></tr>
+                                            <tr><td>place</td><td>VARCHAR(200)</td><td>NOT NULL</td><td>สถานที่</td></tr>
+                                            <tr><td>reason</td><td>TEXT</td><td>NOT NULL</td><td>เหตุผล</td></tr>
+                                            <tr><td>status</td><td>ENUM('รอ','อนุมัติ','ไม่อนุญาต')</td><td>DEFAULT 'รอ'</td><td>สถานะคำขอ</td></tr>
+                                            <tr><td>created_date</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>วันที่ส่งคำขอ</td></tr>
+                                            <tr><td>updated_date</td><td>DATETIME</td><td>ON UPDATE CURRENT_TIMESTAMP</td><td>วันที่อัปเดต</td></tr>
+                                            <tr><td>created_by</td><td>INT</td><td>FOREIGN KEY REFERENCES users(id)</td><td>ผู้สร้างคำขอ</td></tr>
+                                            <tr><td>approved_by</td><td>INT</td><td>FOREIGN KEY REFERENCES users(id)</td><td>ผู้อนุมัติ</td></tr>
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </ChildContent>
+                            </MudExpansionPanel>
+
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.History" class="mr-3" />
+                                        <MudText>📈 REQUEST_HISTORY Table</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudSimpleTable Style="overflow-x: auto;">
+                                        <thead>
+                                            <tr>
+                                                <th>Column</th>
+                                                <th>Type</th>
+                                                <th>Constraint</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>id</td><td>INT</td><td>PRIMARY KEY, AUTO_INCREMENT</td><td>History ID</td></tr>
+                                            <tr><td>request_id</td><td>INT</td><td>FOREIGN KEY REFERENCES requests(id)</td><td>Request ที่เกี่ยวข้อง</td></tr>
+                                            <tr><td>old_status</td><td>VARCHAR(20)</td><td></td><td>สถานะเดิม</td></tr>
+                                            <tr><td>new_status</td><td>VARCHAR(20)</td><td>NOT NULL</td><td>สถานะใหม่</td></tr>
+                                            <tr><td>changed_by</td><td>VARCHAR(100)</td><td>NOT NULL</td><td>ผู้เปลี่ยนสถานะ</td></tr>
+                                            <tr><td>changed_date</td><td>DATETIME</td><td>DEFAULT CURRENT_TIMESTAMP</td><td>วันที่เปลี่ยน</td></tr>
+                                            <tr><td>comments</td><td>TEXT</td><td></td><td>หมายเหตุ</td></tr>
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </ChildContent>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+
+                        <!-- Current JSON Structure -->
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">📁 Current JSON File Structure</MudText>
+                            <MudCodeHighlight Language="json">
+{
+  "Requests": [
+    {
+      "Id": 1,
+      "Name": "วัยวาย",
+      "Date": "2025-06-15",
+      "Time": "18:00",
+      "Place": "ร้านหมูกระทะ",
+      "Reason": "นัดเพื่อนเก่าสมัยมัธยม",
+      "Status": "รอ",
+      "CreatedDate": "2025-06-14T10:00:00"
+    }
+  ],
+  "NextId": 51
+}
+                            </MudCodeHighlight>
+                        </MudPaper>
+                    </MudStack>
+                </MudTabPanel>
+
+                <!-- System Flow Tab -->
+                <MudTabPanel Text="🔄 System Flow">
+                    <MudStack Spacing="4">
+                        <MudText Typo="Typo.h5" Color="Color.Primary">
+                            System Flow & User Roles - ระบบขออนุญาตเมีย
+                        </MudText>
+
+                        <!-- Roles Overview -->
+                        <MudGrid>
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+                                    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Large" Color="Color.Secondary" />
+                                        <MudText Typo="Typo.h6" Align="Align.Center">👑 เมีย (Admin)</MudText>
+                                        <MudText Typo="Typo.body2" Align="Align.Center">
+                                            ผู้ควบคุมระบบ<br/>
+                                            มีสิทธิ์เต็ม
+                                        </MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                                    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" Color="Color.Primary" />
+                                        <MudText Typo="Typo.h6" Align="Align.Center">👨 สามี (User)</MudText>
+                                        <MudText Typo="Typo.body2" Align="Align.Center">
+                                            ผู้ขออนุญาต<br/>
+                                            สิทธิ์จำกัด
+                                        </MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+
+                            <MudItem xs="12" md="4">
+                                <MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);">
+                                    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="@Icons.Material.Filled.PersonOutline" Size="Size.Large" Color="Color.Default" />
+                                        <MudText Typo="Typo.h6" Align="Align.Center">👤 Guest</MudText>
+                                        <MudText Typo="Typo.body2" Align="Align.Center">
+                                            ผู้เยี่ยมชม<br/>
+                                            ไม่มีสิทธิ์
+                                        </MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <!-- System Flow Diagram -->
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">🔄 System Flow Diagram</MudText>
+                            <div id="mermaid-flow">
+                                <pre class="mermaid">
+flowchart TD
+    A[👤 ผู้ใช้เข้าสู่ระบบ] --> B{🔐 Authentication}
+    B -->|ไม่ได้ Login| C[🏠 Home Page<br/>FullPageLayout]
+    B -->|Login สำเร็จ| D{👑 Check Role}
+    
+    D -->|เมีย| E[📊 Admin Dashboard<br/>MainLayout]
+    D -->|สามี| F[📝 User Dashboard<br/>MainLayout]
+    D -->|Guest| G[🚫 Limited Access]
+    
+    C --> H[🔑 Login Page<br/>FullPageLayout]
+    H --> I[💌 Request Form<br/>FullPageLayout]
+    
+    E --> J[📋 View All Requests]
+    E --> K[✅ Approve/Reject]
+    E --> L[📊 Statistics View]
+    E --> M[📚 Documentation]
+    
+    F --> N[📝 My Requests]
+    F --> O[💌 Create New Request]
+    F --> P[👁️ View Status]
+    
+    I --> Q[📤 Submit Request]
+    Q --> R[💾 Store in JSON]
+    R --> S[📧 Notification]
+    
+    J --> T{🤔 Decision}
+    T -->|Approve| U[✅ Status = อนุมัติ]
+    T -->|Reject| V[❌ Status = ไม่อนุญาต]
+    
+    U --> W[💾 Update JSON]
+    V --> W
+    W --> X[📱 Notify User]
+    
+    style A fill:#e1f5fe
+    style E fill:#f3e5f5
+    style F fill:#e8f5e8
+    style I fill:#fff3e0
+    style U fill:#e8f5e8
+    style V fill:#ffebee
+                                </pre>
+                            </div>
+                        </MudPaper>
+
+                        <!-- Role Permissions -->
+                        <MudExpansionPanels Elevation="3">
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Security" class="mr-3" />
+                                        <MudText>🔐 Role Permissions</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="4">
+                                            <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid #e91e63;">
+                                                <MudText Typo="Typo.h6" Color="Color.Secondary">👑 เมีย (Admin)</MudText>
+                                                <MudList T="string" Dense="true">
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        ดูคำขอทั้งหมด
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        อนุมัติ/ปฏิเสธคำขอ
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        ดูสถิติระบบ
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        เข้าถึง Documentation
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        จัดการผู้ใช้ (Future)
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        สร้างคำขออนุญาต
+                                                    </MudListItem>
+                                                </MudList>
+                                            </MudPaper>
+                                        </MudItem>
+
+                                        <MudItem xs="12" md="4">
+                                            <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid #2196f3;">
+                                                <MudText Typo="Typo.h6" Color="Color.Primary">👨 สามี (User)</MudText>
+                                                <MudList T="string" Dense="true">
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        สร้างคำขออนุญาต
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        ดูคำขอของตนเอง
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        ติดตามสถานะคำขอ
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                                                        ดูคำขอของคนอื่น
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                                                        อนุมัติ/ปฏิเสธคำขอ
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                                                        เข้าถึง Admin Panel
+                                                    </MudListItem>
+                                                </MudList>
+                                            </MudPaper>
+                                        </MudItem>
+
+                                        <MudItem xs="12" md="4">
+                                            <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid #9e9e9e;">
+                                                <MudText Typo="Typo.h6" Color="Color.Default">👤 Guest</MudText>
+                                                <MudList T="string" Dense="true">
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        สร้างคำขออนุญาต (ไม่ต้อง Login)
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        ดูหน้า Home
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                                                        เข้าสู่ระบบ
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                                                        ดูสถานะคำขอ
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                                                        เข้าถึง Dashboard
+                                                    </MudListItem>
+                                                    <MudListItem T="string" Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                                                        จัดการคำขอ
+                                                    </MudListItem>
+                                                </MudList>
+                                            </MudPaper>
+                                        </MudItem>
+                                    </MudGrid>
+                                </ChildContent>
+                            </MudExpansionPanel>
+
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Route" class="mr-3" />
+                                        <MudText>🗺️ Page Routes & Access</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudSimpleTable Style="overflow-x: auto;">
+                                        <thead>
+                                            <tr>
+                                                <th>Route</th>
+                                                <th>Page</th>
+                                                <th>Layout</th>
+                                                <th>เมีย</th>
+                                                <th>สามี</th>
+                                                <th>Guest</th>
+                                                <th>Description</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>/</td>
+                                                <td>Home</td>
+                                                <td>FullPage</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>หน้าแรก</td>
+                                            </tr>
+                                            <tr>
+                                                <td>/login</td>
+                                                <td>Login</td>
+                                                <td>FullPage</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>เข้าสู่ระบบ</td>
+                                            </tr>
+                                            <tr>
+                                                <td>/request</td>
+                                                <td>Request Form</td>
+                                                <td>FullPage</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>ฟอร์มขออนุญาต (ไม่ต้อง Login)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>/request-logged-in</td>
+                                                <td>Request Form</td>
+                                                <td>MainLayout</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>❌</td>
+                                                <td>ฟอร์มขออนุญาต (Login แล้ว)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>/dashboard</td>
+                                                <td>User Dashboard</td>
+                                                <td>MainLayout</td>
+                                                <td>✅</td>
+                                                <td>✅</td>
+                                                <td>❌</td>
+                                                <td>Dashboard ส่วนตัว</td>
+                                            </tr>
+                                            <tr>
+                                                <td>/admin</td>
+                                                <td>Admin Panel</td>
+                                                <td>MainLayout</td>
+                                                <td>✅</td>
+                                                <td>❌</td>
+                                                <td>❌</td>
+                                                <td>จัดการคำขอทั้งหมด</td>
+                                            </tr>
+                                            <tr>
+                                                <td>/docs</td>
+                                                <td>Documentation</td>
+                                                <td>MainLayout</td>
+                                                <td>✅</td>
+                                                <td>❌</td>
+                                                <td>❌</td>
+                                                <td>เอกสารระบบ</td>
+                                            </tr>
+                                        </tbody>
+                                    </MudSimpleTable>
+                                </ChildContent>
+                            </MudExpansionPanel>
+
+                            <MudExpansionPanel>
+                                <TitleContent>
+                                    <div style="display: flex; align-items: center;">
+                                        <MudIcon Icon="@Icons.Material.Filled.Timeline" class="mr-3" />
+                                        <MudText>📋 Request Lifecycle</MudText>
+                                    </div>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudPaper Class="pa-4" Elevation="1">
+                                        <div id="mermaid-lifecycle">
+                                            <pre class="mermaid">
+stateDiagram-v2
+    [*] --> สร้างคำขอ : User/Guest ส่งฟอร์ม
+    สร้างคำขอ --> รอการอนุมัติ : Status = "รอ"
+    
+    รอการอนุมัติ --> อนุมัติ : เมียอนุมัติ
+    รอการอนุมัติ --> ไม่อนุญาต : เมียปฏิเสธ
+    
+    อนุมัติ --> [*] : สามีสามารถออกไปได้
+    ไม่อนุญาต --> [*] : สามีไม่สามารถออกไปได้
+    
+    note right of สร้างคำขอ
+        - บันทึกลง JSON file
+        - Auto-generated ID
+        - CreatedDate = now()
+    end note
+    
+    note right of รอการอนุมัติ
+        - แสดงในตาราง Admin
+        - สามีดูได้ใน Dashboard
+        - สถานะ: รอ
+    end note
+    
+    note right of อนุมัติ
+        - อัปเดต Status = "อนุมัติ"
+        - แสดง Snackbar สำเร็จ
+        - บันทึกการเปลี่ยนแปลง
+    end note
+    
+    note right of ไม่อนุญาต
+        - อัปเดต Status = "ไม่อนุญาต"
+        - แสดง Snackbar ปฏิเสธ
+        - บันทึกการเปลี่ยนแปลง
+    end note
+                                            </pre>
+                                        </div>
+                                    </MudPaper>
+                                </ChildContent>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+
+                        <!-- Technology Stack -->
+                        <MudPaper Class="pa-4" Elevation="2">
+                            <MudText Typo="Typo.h6" Class="mb-3">🔧 Technology Stack</MudText>
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.subtitle1" Color="Color.Primary">Frontend:</MudText>
+                                    <MudList T="string" Dense="true">
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Web">Blazor Server (.NET 8)</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Palette">MudBlazor UI Framework</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.DevicesOther">Responsive CSS</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Animation">Custom Modal Components</MudListItem>
+                                    </MudList>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.subtitle1" Color="Color.Primary">Backend:</MudText>
+                                    <MudList T="string" Dense="true">
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Storage">JSON File Storage</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Security">Custom Authentication</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Api">RESTful-like Services</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.Memory">In-Memory State Management</MudListItem>
+                                    </MudList>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    </MudStack>
+                </MudTabPanel>
+            </MudTabs>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+<!-- Mermaid.js Script -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'default' });
+</script>
+
+@code {
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Re-render mermaid diagrams after page load
+            InvokeAsync(async () =>
+            {
+                await Task.Delay(500);
+                await InvokeAsync(StateHasChanged);
+            });
+        }
+        return base.OnAfterRenderAsync(firstRender);
+    }
+}

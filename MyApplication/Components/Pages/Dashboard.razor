@@ -1,0 +1,245 @@
+@page "/dashboard"
+@using MyApplication.Models
+@using MyApplication.Services
+@inject AuthService AuthService
+@inject RequestService RequestService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Dashboard - คำขอของฉัน</PageTitle>
+
+@if (!AuthService.IsAuthenticated)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        กรุณาเข้าสู่ระบบก่อนใช้งาน
+    </MudAlert>
+    Navigation.NavigateTo("/login");
+    return;
+}
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <MudPaper Elevation="3" Class="pa-6" Style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+        <MudStack Spacing="4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.Dashboard" Size="Size.Large" Color="Color.Primary" />
+                    <MudText Typo="Typo.h4" Color="Color.Primary">
+                        📝 คำขอของฉัน
+                    </MudText>
+                </MudStack>
+                
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           Href="/request">
+                    ขออนุญาตใหม่
+                </MudButton>
+            </MudStack>
+
+            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Info">
+                <MudText>
+                    ยินดีต้อนรับ <strong>@AuthService.CurrentUser?.DisplayName</strong>! 
+                    สถานะของคุณคือสิ่งที่ภรรยากำหนด 💕
+                </MudText>
+            </MudAlert>
+
+            <!-- Search Bar -->
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <MudTextField @bind-Value="searchString"
+                                  Placeholder="ค้นหาคำขอ... (สถานที่, เหตุผล, สถานะ)"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Immediate="true"
+                                  DebounceInterval="300"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Style="flex: 1;" />
+                    
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Clear"
+                               OnClick="@ClearSearch">
+                        ล้าง
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Info"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="@LoadUserRequests">
+                        รีเฟรช
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+            }
+            else if (requests.Any())
+            {
+                <MudTable @ref="mudTable"
+                          Items="@FilteredRequests"
+                          Hover="true"
+                          Breakpoint="Breakpoint.Sm"
+                          LoadingProgressColor="Color.Info"
+                          SortLabel="เรียงตาม"
+                          Dense="true">
+                    
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">📋 รายการคำขอทั้งหมด</MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.body2" Class="mr-4">
+                            แสดง @FilteredRequests.Count() จาก @requests.Count รายการ
+                        </MudText>
+                    </ToolBarContent>
+                    
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Date)">วันที่</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Time)">เวลา</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Place)">สถานที่</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Reason)">เหตุผล</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Status)">สถานะ</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.CreatedDate)">วันที่ส่งคำขอ</MudTableSortLabel></MudTh>
+                    </HeaderContent>
+                    
+                    <RowTemplate>
+                        <MudTd DataLabel="วันที่">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" />
+                                @context.Date
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="เวลา">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" />
+                                @context.Time
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="สถานที่">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" />
+                                @context.Place
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="เหตุผล">@context.Reason</MudTd>
+                        <MudTd DataLabel="สถานะ">
+                            <MudChip Size="Size.Small" 
+                                     Color="@GetStatusColor(context.Status)"
+                                     Icon="@GetStatusIcon(context.Status)"
+                                     T="string">
+                                @context.Status
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="วันที่ส่งคำขอ">
+                            @context.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                        </MudTd>
+                    </RowTemplate>
+                    
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[]{5, 10, 25, 50}" 
+                                       HideRowsPerPage="false"
+                                       HidePageNumber="false"
+                                       InfoFormat="{first_item}-{last_item} จาก {all_items}"
+                                       RowsPerPageString="รายการต่อหน้า:" />
+                    </PagerContent>
+                </MudTable>
+            }
+            else
+            {
+                <MudPaper Class="pa-8" Elevation="0" Style="text-align: center; background-color: rgba(255,255,255,0.7);">
+                    <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Color="Color.Surface" />
+                    <MudText Typo="Typo.h6" Color="Color.Surface">
+                        ยังไม่มีคำขออนุญาต
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Surface">
+                        กดปุ่ม "ขออนุญาตใหม่" เพื่อส่งคำขออนุญาตครั้งแรก
+                    </MudText>
+                </MudPaper>
+            }
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private List<RequestModel> requests = new();
+    private bool isLoading = true;
+    private string searchString = "";
+    private MudTable<RequestModel>? mudTable;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await LoadUserRequests();
+    }
+
+    private async Task LoadUserRequests()
+    {
+        isLoading = true;
+        try
+        {
+            if (AuthService.CurrentUser != null)
+            {
+                requests = await RequestService.GetUserRequestsAsync(AuthService.CurrentUser.DisplayName);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"เกิดข้อผิดพลาด: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<RequestModel> FilteredRequests
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(searchString))
+                return requests;
+
+            return requests.Where(x => 
+                x.Place.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                x.Reason.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                x.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                x.Date.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                x.Time.Contains(searchString, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+    }
+
+    private void ClearSearch()
+    {
+        searchString = "";
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "รอ" => Color.Warning,
+            "อนุมัติ" => Color.Success,
+            "ไม่อนุญาต" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetStatusIcon(string status)
+    {
+        return status switch
+        {
+            "รอ" => Icons.Material.Filled.HourglassEmpty,
+            "อนุมัติ" => Icons.Material.Filled.CheckCircle,
+            "ไม่อนุญาต" => Icons.Material.Filled.Cancel,
+            _ => Icons.Material.Filled.Help
+        };
+    }
+}

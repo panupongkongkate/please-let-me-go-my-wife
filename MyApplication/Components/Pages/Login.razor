@@ -1,0 +1,167 @@
+@page "/login"
+@using MyApplication.Models
+@using MyApplication.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@layout Layout.FullPageLayout
+
+<PageTitle>เข้าสู่ระบบ - ขออนุญาตเมีย</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="pt-16">
+    <MudPaper Elevation="3" Class="pa-8" Style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+        <MudStack Spacing="4" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Color="Color.Secondary" />
+            <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Secondary">
+                🔐 เข้าสู่ระบบ ขออนุญาตเมีย
+            </MudText>
+
+            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                <DataAnnotationsValidator />
+                <MudStack Spacing="3">
+                    <MudTextField @bind-Value="loginModel.Username"
+                                  Label="ชื่อผู้ใช้"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => loginModel.Username)"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Person" />
+
+                    <MudTextField @bind-Value="loginModel.Password"
+                                  Label="รหัสผ่าน"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined"
+                                  For="@(() => loginModel.Password)"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Key" />
+
+                    <MudButton ButtonType="ButtonType.Submit"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Size="Size.Large"
+                               FullWidth="true"
+                               Disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <MudProgressCircular Size="Size.Small" Color="Color.Secondary" Indeterminate="true" />
+                            <MudSpacer />
+                        }
+                        เข้าสู่ระบบ
+                    </MudButton>
+                </MudStack>
+            </EditForm>
+
+            <MudDivider />
+
+            <MudPaper Class="pa-4" Style="background-color: rgba(255,255,255,0.9);">
+                <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Info">
+                    📝 บัญชีทดสอบ:
+                </MudText>
+                <MudText Typo="Typo.body2">
+                    Admin (เมีย): username = "เมีย", password = "admin"<br/>
+                    User (สามี): username = "สามี", password = "123456"<br/>
+                    Guest: username = "guest", password = "guest"
+                </MudText>
+            </MudPaper>
+
+            <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Info">
+                สำหรับ Demo: คลิกปุ่มด้านล่างเพื่อเข้าสู่ระบบทันที!
+            </MudText>
+
+            <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Warning"
+                           StartIcon="@Icons.Material.Filled.AdminPanelSettings"
+                           OnClick="@(() => HandleQuickLogin("admin"))"
+                           Disabled="@isLoading">
+                    👑 Login Role Admin
+                </MudButton>
+
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Info"
+                           StartIcon="@Icons.Material.Filled.Person"
+                           OnClick="@(() => HandleQuickLogin("user"))"
+                           Disabled="@isLoading">
+                    👤 Login Role User
+                </MudButton>
+            </MudStack>
+
+            <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Error">
+                หากลืมรหัสผ่าน... ให้ไปขอเมียใหม่ 😅
+            </MudText>
+
+            <MudDivider />
+
+            <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Info">
+                หรือส่งคำขออนุญาตโดยไม่ต้องเข้าสู่ระบบ
+            </MudText>
+
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Secondary"
+                       Size="Size.Large"
+                       FullWidth="true"
+                       StartIcon="@Icons.Material.Filled.Send"
+                       Href="/request">
+                💌 ขออนุญาตเมีย
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private LoginModel loginModel = new();
+    private bool isLoading = false;
+
+    protected override Task OnInitializedAsync()
+    {
+        if (AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        try
+        {
+            var success = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
+            if (success)
+            {
+                Snackbar.Add($"ยินดีต้อนรับ {AuthService.CurrentUser?.DisplayName}! 🎉", Severity.Success);
+                Navigation.NavigateTo("/dashboard");
+            }
+            else
+            {
+                Snackbar.Add("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง 😅", Severity.Error);
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleQuickLogin(string role)
+    {
+        isLoading = true;
+        try
+        {
+            var success = await AuthService.QuickLoginAsync(role);
+            if (success)
+            {
+                var roleText = role == "admin" ? "เมีย" : "สามี";
+                Snackbar.Add($"เข้าสู่ระบบในฐานะ {roleText} สำเร็จ! 👑", Severity.Success);
+                Navigation.NavigateTo("/dashboard");
+            }
+            else
+            {
+                Snackbar.Add("ไม่สามารถเข้าสู่ระบบได้ 😞", Severity.Error);
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

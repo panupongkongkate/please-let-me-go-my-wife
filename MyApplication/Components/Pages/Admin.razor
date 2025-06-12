@@ -1,0 +1,917 @@
+@page "/admin"
+@using MyApplication.Models
+@using MyApplication.Services
+@inject AuthService AuthService
+@inject RequestService RequestService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Admin - คำร้องที่รอการอนุญาต</PageTitle>
+
+@if (!AuthService.IsAuthenticated)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">
+        กรุณาเข้าสู่ระบบก่อนใช้งาน
+    </MudAlert>
+    Navigation.NavigateTo("/login");
+    return;
+}
+
+@if (AuthService.CurrentUser?.Role != "เมีย")
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="pt-16">
+        <MudPaper Elevation="3" Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Block" Size="Size.Large" Color="Color.Error" />
+            <MudText Typo="Typo.h5" Color="Color.Error" Class="mb-4">
+                ไม่มีสิทธิ์เข้าถึง
+            </MudText>
+            <MudText Typo="Typo.body1">
+                หน้านี้สำหรับเมียเท่านั้น! 👑<br/>
+                สามีไม่มีสิทธิ์เข้ามาดู 😅
+            </MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/dashboard" Class="mt-4">
+                กลับไปหน้า Dashboard
+            </MudButton>
+        </MudPaper>
+    </MudContainer>
+    return;
+}
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge">
+    <MudPaper Elevation="3" Class="pa-6" Style="background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);">
+        <MudStack Spacing="4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Large" Color="Color.Warning" />
+                <MudText Typo="Typo.h4" Color="Color.Warning">
+                    👑 คำร้องที่รอการอนุญาต
+                </MudText>
+            </MudStack>
+
+            <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Info">
+                <MudText>
+                    ยินดีต้อนรับ <strong>@AuthService.CurrentUser?.DisplayName</strong>! 
+                    เมื่อท่านอนุมัติ สามีจะได้สิทธิ์ออกจากบ้านแบบมีเงื่อนไขเท่านั้น 🏠
+                </MudText>
+            </MudAlert>
+
+            <!-- Dashboard Section -->
+            <MudPaper Class="pa-4" Style="background-color: rgba(255,255,255,0.9);">
+                <MudText Typo="Typo.h5" Color="Color.Primary" Class="mb-3">
+                    📊 สรุปสถิติคำขออนุญาต
+                </MudText>
+                
+                <MudGrid>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4 text-center" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                            <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" />
+                            <MudText Typo="Typo.h4">@allRequests.Count</MudText>
+                            <MudText Typo="Typo.body2">คำขอทั้งหมด</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4 text-center" Style="background: linear-gradient(135deg, #ffb545 0%, #ff8a65 100%); color: white;">
+                            <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Size="Size.Large" />
+                            <MudText Typo="Typo.h4">@allRequests.Count(r => r.Status == "รอ")</MudText>
+                            <MudText Typo="Typo.body2">รอการอนุมัติ</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4 text-center" Style="background: linear-gradient(135deg, #3dcb6c 0%, #27ae60 100%); color: white;">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Large" />
+                            <MudText Typo="Typo.h4">@allRequests.Count(r => r.Status == "อนุมัติ")</MudText>
+                            <MudText Typo="Typo.body2">อนุมัติแล้ว</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-4 text-center" Style="background: linear-gradient(135deg, #ff3f5f 0%, #e74c3c 100%); color: white;">
+                            <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Large" />
+                            <MudText Typo="Typo.h4">@allRequests.Count(r => r.Status == "ไม่อนุญาต")</MudText>
+                            <MudText Typo="Typo.body2">ไม่อนุญาต</MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                <MudDivider Class="my-4" />
+
+                <!-- สถิติตามผู้ขอ -->
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-3">
+                    <MudText Typo="Typo.h6" Color="Color.Primary">
+                        📈 สถิติตามผู้ขออนุญาต
+                    </MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        หน้า @(userStatsCurrentPage + 1) จาก @userStatsTotalPages
+                    </MudText>
+                </MudStack>
+
+                <MudGrid>
+                    @foreach (var userGroup in GetPaginatedUserStatistics())
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <MudPaper Class="pa-3" Elevation="2">
+                                <MudStack>
+                                    <MudText Typo="Typo.subtitle1" Color="Color.Primary">
+                                        👤 @userGroup.Key
+                                    </MudText>
+                                    <MudStack Row="true" Spacing="2">
+                                        <MudChip Size="Size.Small" Color="Color.Info" T="string">
+                                            ทั้งหมด: @userGroup.Value.Total
+                                        </MudChip>
+                                        <MudChip Size="Size.Small" Color="Color.Warning" T="string">
+                                            รอ: @userGroup.Value.Pending
+                                        </MudChip>
+                                        <MudChip Size="Size.Small" Color="Color.Success" T="string">
+                                            อนุมัติ: @userGroup.Value.Approved
+                                        </MudChip>
+                                        <MudChip Size="Size.Small" Color="Color.Error" T="string">
+                                            ปฏิเสธ: @userGroup.Value.Rejected
+                                        </MudChip>
+                                    </MudStack>
+                                </MudStack>
+                            </MudPaper>
+                        </MudItem>
+                    }
+                </MudGrid>
+
+                <!-- Pagination Controls สำหรับสถิติผู้ขอ -->
+                @if (userStatsTotalPages > 1)
+                {
+                    <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2" Class="mt-3">
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                                       Color="Color.Primary"
+                                       Disabled="@(userStatsCurrentPage == 0)"
+                                       OnClick="@(() => ChangeUserStatsPage(userStatsCurrentPage - 1))" />
+                        
+                        @for (int i = 0; i < userStatsTotalPages; i++)
+                        {
+                            var pageIndex = i;
+                            <MudButton Variant="@(pageIndex == userStatsCurrentPage ? Variant.Filled : Variant.Outlined)"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => ChangeUserStatsPage(pageIndex))">
+                                @(pageIndex + 1)
+                            </MudButton>
+                        }
+                        
+                        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                                       Color="Color.Primary"
+                                       Disabled="@(userStatsCurrentPage == userStatsTotalPages - 1)"
+                                       OnClick="@(() => ChangeUserStatsPage(userStatsCurrentPage + 1))" />
+                    </MudStack>
+                }
+            </MudPaper>
+
+            <!-- Search Bar -->
+            <MudPaper Class="pa-4" Elevation="1" Style="background-color: rgba(255,255,255,0.9);">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <MudTextField @bind-Value="searchString"
+                                  Placeholder="ค้นหาคำขอ... (ผู้ขอ, สถานที่, เหตุผล, สถานะ)"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Immediate="true"
+                                  DebounceInterval="300"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Style="flex: 1;" />
+                    
+                    <MudSelect @bind-Value="statusFilter"
+                               Label="กรองตามสถานะ"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true">
+                        <MudSelectItem Value="@("ทั้งหมด")">ทั้งหมด</MudSelectItem>
+                        <MudSelectItem Value="@("รอ")">รออนุมัติ</MudSelectItem>
+                        <MudSelectItem Value="@("อนุมัติ")">อนุมัติแล้ว</MudSelectItem>
+                        <MudSelectItem Value="@("ไม่อนุญาต")">ไม่อนุญาต</MudSelectItem>
+                    </MudSelect>
+                    
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Clear"
+                               OnClick="@ClearSearch">
+                        ล้าง
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Info"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="@LoadAllRequests">
+                        รีเฟรช
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+            }
+            else if (allRequests.Any())
+            {
+                <MudTable @ref="mudTable"
+                          Items="@FilteredRequests"
+                          Hover="true"
+                          Breakpoint="Breakpoint.Sm"
+                          LoadingProgressColor="Color.Info"
+                          SortLabel="เรียงตาม"
+                          Dense="true">
+                    
+                    <ToolBarContent>
+                        <MudText Typo="Typo.h6">📋 รายการคำขอทั้งหมด</MudText>
+                        <MudSpacer />
+                        <MudText Typo="Typo.body2" Class="mr-4">
+                            แสดง @FilteredRequests.Count() จาก @allRequests.Count รายการ
+                        </MudText>
+                    </ToolBarContent>
+                    
+                    <HeaderContent>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Name)">ผู้ขอ</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Date)">วันที่</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Time)">เวลา</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Place)">สถานที่</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Reason)">เหตุผล</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.Status)">สถานะ</MudTableSortLabel></MudTh>
+                        <MudTh><MudTableSortLabel SortBy="new Func<RequestModel, object>(x => x.CreatedDate)">วันที่ส่งคำขอ</MudTableSortLabel></MudTh>
+                        <MudTh>การจัดการ</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="ผู้ขอ">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                                @context.Name
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="วันที่">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" />
+                                @context.Date
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="เวลา">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" />
+                                @context.Time
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="สถานที่">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudIcon Icon="@Icons.Material.Filled.LocationOn" Size="Size.Small" />
+                                @context.Place
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="เหตุผล">@context.Reason</MudTd>
+                        <MudTd DataLabel="สถานะ">
+                            <MudChip Size="Size.Small" 
+                                     Color="@GetStatusColor(context.Status)"
+                                     Icon="@GetStatusIcon(context.Status)"
+                                     T="string">
+                                @context.Status
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="วันที่ส่งคำขอ">
+                            @context.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                        </MudTd>
+                        <MudTd DataLabel="การจัดการ">
+                            @if (context.Status == "รอ")
+                            {
+                                <MudStack Row="true" Spacing="1">
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Success"
+                                               Size="Size.Small"
+                                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                                               @onclick="@(() => ShowApproveModal(context))"
+                                               Disabled="@isProcessing">
+                                        อนุมัติ
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               StartIcon="@Icons.Material.Filled.Cancel"
+                                               @onclick="@(() => ShowRejectModal(context))"
+                                               Disabled="@isProcessing">
+                                        ปฏิเสธ
+                                    </MudButton>
+                                </MudStack>
+                            }
+                            else
+                            {
+                                <MudChip Size="Size.Small" Color="Color.Default" T="string">
+                                    ดำเนินการแล้ว
+                                </MudChip>
+                            }
+                        </MudTd>
+                    </RowTemplate>
+                    
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[]{10, 25, 50, 100}" 
+                                       HideRowsPerPage="false"
+                                       HidePageNumber="false"
+                                       InfoFormat="{first_item}-{last_item} จาก {all_items}"
+                                       RowsPerPageString="รายการต่อหน้า:" />
+                    </PagerContent>
+                </MudTable>
+
+                <MudDivider />
+
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2" Color="Color.Default">
+                        กรองแล้ว: @FilteredRequests.Count() จาก @allRequests.Count คำขอ | 
+                        รอดำเนินการ: @FilteredRequests.Count(r => r.Status == "รอ") คำขอ
+                    </MudText>
+                    
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="@LoadAllRequests">
+                        รีเฟรช
+                    </MudButton>
+                </MudStack>
+            }
+            else
+            {
+                <MudPaper Class="pa-8" Elevation="0" Style="text-align: center; background-color: rgba(255,255,255,0.7);">
+                    <MudIcon Icon="@Icons.Material.Filled.Assignment" Size="Size.Large" Color="Color.Surface" />
+                    <MudText Typo="Typo.h6" Color="Color.Surface">
+                        ยังไม่มีคำขออนุญาต
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Surface">
+                        เมื่อมีใครส่งคำขออนุญาต จะแสดงที่นี่
+                    </MudText>
+                </MudPaper>
+            }
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+<!-- Custom Approve Modal -->
+@if (showApproveModal && selectedRequest != null)
+{
+    <div class="custom-modal-overlay" @onclick="CloseModals">
+        <div class="custom-modal-content" @onclick:stopPropagation="true">
+            <div class="custom-modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #4caf50; font-size: 24px;">✅</span>
+                    <h3 style="margin: 0; color: #4caf50;">ยืนยันการอนุมัติ</h3>
+                </div>
+                <button class="custom-modal-close" @onclick="CloseModals">&times;</button>
+            </div>
+            
+            <div class="custom-modal-body">
+                <div class="custom-alert custom-alert-info">
+                    <span style="margin-right: 8px;">ℹ️</span>
+                    คุณต้องการอนุมัติคำขออนุญาตนี้หรือไม่?
+                </div>
+                
+                <div class="custom-request-details custom-approve-bg">
+                    <div><strong>ผู้ขออนุญาต:</strong> @selectedRequest.Name</div>
+                    <div><strong>วันที่:</strong> @selectedRequest.Date เวลา @selectedRequest.Time</div>
+                    <div><strong>สถานที่:</strong> @selectedRequest.Place</div>
+                    <div><strong>เหตุผล:</strong> @selectedRequest.Reason</div>
+                </div>
+            </div>
+            
+            <div class="custom-modal-footer">
+                <button class="custom-btn custom-btn-secondary" @onclick="CloseModals" disabled="@isProcessing">
+                    ❌ ยกเลิก
+                </button>
+                <button class="custom-btn custom-btn-success" @onclick="ConfirmApprove" disabled="@isProcessing">
+                    @if (isProcessing)
+                    {
+                        <span class="loading-spinner"></span>
+                    }
+                    ✅ ยืนยันอนุมัติ
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Custom Reject Modal -->
+@if (showRejectModal && selectedRequest != null)
+{
+    <div class="custom-modal-overlay" @onclick="CloseModals">
+        <div class="custom-modal-content" @onclick:stopPropagation="true">
+            <div class="custom-modal-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #f44336; font-size: 24px;">❌</span>
+                    <h3 style="margin: 0; color: #f44336;">ยืนยันการปฏิเสธ</h3>
+                </div>
+                <button class="custom-modal-close" @onclick="CloseModals">&times;</button>
+            </div>
+            
+            <div class="custom-modal-body">
+                <div class="custom-alert custom-alert-warning">
+                    <span style="margin-right: 8px;">⚠️</span>
+                    คุณต้องการปฏิเสธคำขออนุญาตนี้หรือไม่?
+                </div>
+                
+                <div class="custom-request-details custom-reject-bg">
+                    <div><strong>ผู้ขออนุญาต:</strong> @selectedRequest.Name</div>
+                    <div><strong>วันที่:</strong> @selectedRequest.Date เวลา @selectedRequest.Time</div>
+                    <div><strong>สถานที่:</strong> @selectedRequest.Place</div>
+                    <div><strong>เหตุผล:</strong> @selectedRequest.Reason</div>
+                </div>
+                
+                <div class="custom-alert custom-alert-error">
+                    <span style="margin-right: 8px;">🚫</span>
+                    การปฏิเสธนี้จะส่งผลให้สามีไม่สามารถออกไปได้ ⚠️
+                </div>
+            </div>
+            
+            <div class="custom-modal-footer">
+                <button class="custom-btn custom-btn-secondary" @onclick="CloseModals" disabled="@isProcessing">
+                    ❌ ยกเลิก
+                </button>
+                <button class="custom-btn custom-btn-danger" @onclick="ConfirmReject" disabled="@isProcessing">
+                    @if (isProcessing)
+                    {
+                        <span class="loading-spinner"></span>
+                    }
+                    ❌ ยืนยันปฏิเสธ
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .custom-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1050;
+        backdrop-filter: blur(2px);
+    }
+
+    .custom-modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+        animation: modalFadeIn 0.3s ease-out;
+        margin: 20px;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-modal-content {
+            width: 95%;
+            margin: 10px;
+            border-radius: 8px;
+            max-height: 95vh;
+        }
+    }
+
+    @@keyframes modalFadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .custom-modal-header {
+        padding: 20px 24px 16px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-modal-header {
+            padding: 16px 20px 12px;
+        }
+        
+        .custom-modal-header h3 {
+            font-size: 18px;
+        }
+    }
+
+    .custom-modal-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .custom-modal-close:hover {
+        background-color: #f5f5f5;
+        color: #333;
+    }
+
+    .custom-modal-body {
+        padding: 20px 24px;
+        gap: 16px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-modal-body {
+            padding: 16px 20px;
+            gap: 12px;
+        }
+    }
+
+    .custom-modal-footer {
+        padding: 16px 24px 20px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-modal-footer {
+            padding: 12px 20px 16px;
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
+
+    .custom-alert {
+        padding: 12px 16px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-alert {
+            padding: 10px 12px;
+            font-size: 14px;
+        }
+    }
+
+    .custom-alert-info {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+    }
+
+    .custom-alert-warning {
+        background-color: #fff3e0;
+        color: #f57c00;
+        border: 1px solid #ffcc02;
+    }
+
+    .custom-alert-error {
+        background-color: #ffebee;
+        color: #d32f2f;
+        border: 1px solid #ffcdd2;
+    }
+
+    .custom-request-details {
+        padding: 16px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 14px;
+        border: 1px solid #e0e0e0;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-request-details {
+            padding: 12px;
+            font-size: 13px;
+            gap: 6px;
+        }
+    }
+
+    .custom-approve-bg {
+        background-color: rgba(76, 175, 80, 0.1);
+        border-color: rgba(76, 175, 80, 0.3);
+    }
+
+    .custom-reject-bg {
+        background-color: rgba(244, 67, 54, 0.1);
+        border-color: rgba(244, 67, 54, 0.3);
+    }
+
+    .custom-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        min-width: 120px;
+        justify-content: center;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-btn {
+            padding: 12px 16px;
+            font-size: 16px;
+            min-width: 100%;
+            min-height: 44px;
+        }
+    }
+
+    .custom-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .custom-btn-secondary {
+        background-color: #f5f5f5;
+        color: #666;
+        border: 1px solid #ddd;
+    }
+
+    .custom-btn-secondary:hover:not(:disabled) {
+        background-color: #eeeeee;
+        color: #333;
+    }
+
+    .custom-btn-success {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .custom-btn-success:hover:not(:disabled) {
+        background-color: #45a049;
+        transform: translateY(-1px);
+    }
+
+    .custom-btn-danger {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .custom-btn-danger:hover:not(:disabled) {
+        background-color: #da190b;
+        transform: translateY(-1px);
+    }
+
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+@code {
+    private List<RequestModel> allRequests = new();
+    private bool isLoading = true;
+    private bool isProcessing = false;
+    private string searchString = "";
+    private string statusFilter = "ทั้งหมด";
+    private MudTable<RequestModel>? mudTable;
+    
+    // User Statistics Pagination
+    private int userStatsCurrentPage = 0;
+    private int userStatsPageSize = 6; // 6 กล่องต่อหน้า (2 แถว x 3 คอลัมน์)
+    private int userStatsTotalPages => (int)Math.Ceiling((double)GetUserStatistics().Count / userStatsPageSize);
+    
+    // Custom Modal State
+    private bool showApproveModal = false;
+    private bool showRejectModal = false;
+    private RequestModel? selectedRequest = null;
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!AuthService.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        if (AuthService.CurrentUser?.Role != "เมีย")
+        {
+            return;
+        }
+
+        await LoadAllRequests();
+    }
+
+    private async Task LoadAllRequests()
+    {
+        isLoading = true;
+        try
+        {
+            allRequests = await RequestService.GetAllRequestsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"เกิดข้อผิดพลาด: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private IEnumerable<RequestModel> FilteredRequests
+    {
+        get
+        {
+            var filtered = allRequests.AsEnumerable();
+
+            // Filter by search string
+            if (!string.IsNullOrWhiteSpace(searchString))
+            {
+                filtered = filtered.Where(x => 
+                    x.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                    x.Place.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                    x.Reason.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                    x.Status.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                    x.Date.Contains(searchString, StringComparison.OrdinalIgnoreCase) ||
+                    x.Time.Contains(searchString, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+
+            // Filter by status
+            if (!string.IsNullOrWhiteSpace(statusFilter) && statusFilter != "ทั้งหมด")
+            {
+                filtered = filtered.Where(x => x.Status == statusFilter);
+            }
+
+            return filtered;
+        }
+    }
+
+    private void ClearSearch()
+    {
+        searchString = "";
+        statusFilter = "ทั้งหมด";
+    }
+
+    private void ShowApproveModal(RequestModel request)
+    {
+        selectedRequest = request;
+        showApproveModal = true;
+        StateHasChanged();
+    }
+
+    private void ShowRejectModal(RequestModel request)
+    {
+        selectedRequest = request;
+        showRejectModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseModals()
+    {
+        showApproveModal = false;
+        showRejectModal = false;
+        selectedRequest = null;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmApprove()
+    {
+        if (selectedRequest == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await RequestService.UpdateRequestStatusAsync(selectedRequest.Id, "อนุมัติ");
+            if (success)
+            {
+                Snackbar.Add($"อนุมัติคำขอของ {selectedRequest.Name} เรียบร้อยแล้ว! ✅", Severity.Success);
+                await LoadAllRequests();
+                CloseModals();
+            }
+            else
+            {
+                Snackbar.Add("เกิดข้อผิดพลาดในการอนุมัติ", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"เกิดข้อผิดพลาด: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task ConfirmReject()
+    {
+        if (selectedRequest == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await RequestService.UpdateRequestStatusAsync(selectedRequest.Id, "ไม่อนุญาต");
+            if (success)
+            {
+                Snackbar.Add($"ปฏิเสธคำขอของ {selectedRequest.Name} เรียบร้อยแล้ว! ❌", Severity.Warning);
+                await LoadAllRequests();
+                CloseModals();
+            }
+            else
+            {
+                Snackbar.Add("เกิดข้อผิดพลาดในการปฏิเสธ", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"เกิดข้อผิดพลาด: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "รอ" => Color.Warning,
+            "อนุมัติ" => Color.Success,
+            "ไม่อนุญาต" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetStatusIcon(string status)
+    {
+        return status switch
+        {
+            "รอ" => Icons.Material.Filled.HourglassEmpty,
+            "อนุมัติ" => Icons.Material.Filled.CheckCircle,
+            "ไม่อนุญาต" => Icons.Material.Filled.Cancel,
+            _ => Icons.Material.Filled.Help
+        };
+    }
+
+    private Dictionary<string, UserStatistics> GetUserStatistics()
+    {
+        return allRequests
+            .GroupBy(r => r.Name)
+            .ToDictionary(
+                g => g.Key,
+                g => new UserStatistics
+                {
+                    Total = g.Count(),
+                    Pending = g.Count(r => r.Status == "รอ"),
+                    Approved = g.Count(r => r.Status == "อนุมัติ"),
+                    Rejected = g.Count(r => r.Status == "ไม่อนุญาต")
+                }
+            );
+    }
+
+    private Dictionary<string, UserStatistics> GetPaginatedUserStatistics()
+    {
+        var allStats = GetUserStatistics();
+        return allStats
+            .Skip(userStatsCurrentPage * userStatsPageSize)
+            .Take(userStatsPageSize)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    private void ChangeUserStatsPage(int newPage)
+    {
+        if (newPage >= 0 && newPage < userStatsTotalPages)
+        {
+            userStatsCurrentPage = newPage;
+            StateHasChanged();
+        }
+    }
+
+    public class UserStatistics
+    {
+        public int Total { get; set; }
+        public int Pending { get; set; }
+        public int Approved { get; set; }
+        public int Rejected { get; set; }
+    }
+}

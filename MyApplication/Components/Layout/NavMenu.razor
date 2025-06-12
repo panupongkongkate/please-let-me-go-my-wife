@@ -1,0 +1,57 @@
+@using MyApplication.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<MudNavMenu>
+    @if (!AuthService.IsAuthenticated)
+    {
+        <MudNavLink Href="/login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Login">
+            🔑 เข้าสู่ระบบ
+        </MudNavLink>
+    }
+    else
+    {
+        <MudText Typo="Typo.subtitle2" Class="pa-4" Color="Color.Primary">
+            ยินดีต้อนรับ @AuthService.CurrentUser?.DisplayName
+        </MudText>
+        
+        <MudNavLink Href="/dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">
+            📊 Dashboard สามี
+        </MudNavLink>
+
+        @if (AuthService.CurrentUser?.Role == "เมีย")
+        {
+            <MudNavLink Href="/admin" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                👑 Admin เมีย
+            </MudNavLink>
+            
+            <MudNavLink Href="/docs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Description">
+                📚 Documentation
+            </MudNavLink>
+        }
+    }
+    
+    <MudNavLink Href="/request" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Send">
+        💌 ขออนุญาต
+    </MudNavLink>
+
+    @if (AuthService.IsAuthenticated)
+    {
+        <MudDivider Class="my-2" />
+        <MudNavLink OnClick="@HandleLogout" Icon="@Icons.Material.Filled.Logout">
+            🚪 ออกจากระบบ
+        </MudNavLink>
+    }
+</MudNavMenu>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Snackbar.Add("ออกจากระบบเรียบร้อยแล้ว! 👋", Severity.Info);
+        Navigation.NavigateTo("/login");
+    }
+}
+
+

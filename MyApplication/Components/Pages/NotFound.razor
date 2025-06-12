@@ -1,0 +1,80 @@
+@page "/404"
+@inject NavigationManager Navigation
+
+<PageTitle>หน้าที่คุณหา... หายไป</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pt-16">
+    <MudPaper Elevation="3" Class="pa-8 text-center" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <MudStack Spacing="4" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.SentimentVeryDissatisfied" 
+                     Size="Size.Large" 
+                     Color="Color.Warning"
+                     Style="font-size: 8rem;" />
+            
+            <MudText Typo="Typo.h3" Color="Color.Warning" Align="Align.Center">
+                😵 หน้าที่คุณหา... หายไปเหมือนเสรีภาพของสามี
+            </MudText>
+
+            <MudText Typo="Typo.h5" Color="Color.Secondary" Align="Align.Center">
+                404 - ไม่พบหน้าที่ต้องการ
+            </MudText>
+
+            <MudDivider />
+
+            <MudPaper Class="pa-4" Style="background-color: rgba(255,255,255,0.9);">
+                <MudText Typo="Typo.body1" Color="Color.Dark" Align="Align.Center">
+                    เหมือนความหวังที่จะได้ไปดื่มเหล้ากับเพื่อน 🍺<br/>
+                    หรือเหมือนคำสัญญาที่ว่า "ไปแป็บเดียวเอง" 😅<br/>
+                    บางอย่างมันหายไปแล้วจะไม่กลับมา... 💔
+                </MudText>
+            </MudPaper>
+
+            <MudStack Spacing="3" AlignItems="AlignItems.Center">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Home"
+                           OnClick="@GoHome">
+                    กลับบ้าน
+                </MudButton>
+
+                <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Login"
+                               Href="/login">
+                        เข้าสู่ระบบ
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Info"
+                               StartIcon="@Icons.Material.Filled.Send"
+                               Href="/request">
+                        ขออนุญาต
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Success"
+                               StartIcon="@Icons.Material.Filled.Dashboard"
+                               Href="/dashboard">
+                        Dashboard
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+
+            <MudDivider />
+
+            <MudText Typo="Typo.caption" Color="Color.Default" Align="Align.Center">
+                "บางครั้งสิ่งที่เราตามหาไม่ได้อยู่ที่ปลายทาง แต่อยู่ที่การเดินทาง"<br/>
+                - คำคมจากสามีที่หลงทาง 🗺️
+            </MudText>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

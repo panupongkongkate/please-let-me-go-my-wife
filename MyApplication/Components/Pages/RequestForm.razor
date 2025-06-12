@@ -1,0 +1,163 @@
+@page "/request"
+@using MyApplication.Models
+@using MyApplication.Services
+@inject RequestService RequestService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject AuthService AuthService
+@layout Layout.FullPageLayout
+
+<PageTitle>ขออนุญาตเมีย</PageTitle>
+
+@if (AuthService.IsAuthenticated)
+{
+    Navigation.NavigateTo("/request-logged-in");
+    return;
+}
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pt-4">
+        <MudPaper Elevation="3" Class="pa-8" Style="background: linear-gradient(135deg, #ffb3ba 0%, #ffdfba 100%);">
+            <MudStack Spacing="4" AlignItems="AlignItems.Center">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Size="Size.Large" Color="Color.Secondary" />
+                    <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Secondary">
+                        💌 ขออนุญาตเมีย
+                    </MudText>
+                </MudStack>
+
+                <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.Info">
+                    แบบฟอร์มนี้สามารถใช้งานได้โดยไม่ต้องเข้าสู่ระบบ แต่หากต้องการดูสถานะคำขอ กรุณาเข้าสู่ระบบ
+                </MudAlert>
+
+                <EditForm Model="@requestModel" OnValidSubmit="@HandleSubmit" style="width: 100%;">
+                    <DataAnnotationsValidator />
+                    <MudStack Spacing="3">
+                        <MudTextField @bind-Value="requestModel.Name"
+                                      Label="ชื่อเรา"
+                                      Variant="Variant.Outlined"
+                                      For="@(() => requestModel.Name)"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person" />
+
+                        <MudStack Row="true" Spacing="2">
+                            <MudTextField @bind-Value="requestModel.Date"
+                                          Label="วันที่จะออกไป (dd/mm/yyyy)"
+                                          Variant="Variant.Outlined"
+                                          For="@(() => requestModel.Date)"
+                                          Placeholder="เช่น 25/12/2024"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.CalendarToday" />
+
+                            <MudTextField @bind-Value="requestModel.Time"
+                                          Label="เวลา (hh:mm)"
+                                          Variant="Variant.Outlined"
+                                          For="@(() => requestModel.Time)"
+                                          Placeholder="เช่น 18:30"
+                                          Adornment="Adornment.Start"
+                                          AdornmentIcon="@Icons.Material.Filled.AccessTime" />
+                        </MudStack>
+
+                        <MudTextField @bind-Value="requestModel.Place"
+                                      Label="สถานที่"
+                                      Variant="Variant.Outlined"
+                                      For="@(() => requestModel.Place)"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.LocationOn" />
+
+                        <MudTextField @bind-Value="requestModel.Reason"
+                                      Label="เหตุผล"
+                                      Variant="Variant.Outlined"
+                                      Lines="3"
+                                      For="@(() => requestModel.Reason)"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Edit" />
+
+                        <ValidationSummary />
+
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Warning"
+                                   Size="Size.Large"
+                                   FullWidth="true"
+                                   StartIcon="@Icons.Material.Filled.Send"
+                                   Disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <MudProgressCircular Size="Size.Small" Color="Color.Secondary" Indeterminate="true" />
+                                <MudSpacer />
+                            }
+                            ส่งคำขอ
+                        </MudButton>
+
+                        <MudText Typo="Typo.caption" Align="Align.Center" Color="Color.Error">
+                            การกดปุ่มนี้คือการยอมรับในชะตากรรมของท่าน ⚡
+                        </MudText>
+                    </MudStack>
+                </EditForm>
+
+                @if (showSuccess)
+                {
+                    <MudAlert Severity="Severity.Success" ShowCloseIcon="true" CloseIconClicked="@(() => showSuccess = false)">
+                        <MudText Typo="Typo.body1">
+                            🎉 ส่งคำขออนุญาตเรียบร้อยแล้ว!<br/>
+                            ตอนนี้รอฟังคำตัดสินจากเมียแล้วครับ... 🙏
+                        </MudText>
+                    </MudAlert>
+                }
+
+                <MudDivider />
+
+                <MudStack Row="true" Spacing="2" Justify="Justify.Center">
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Dashboard"
+                               Href="/dashboard">
+                        ดูสถานะคำขอ
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Info"
+                               StartIcon="@Icons.Material.Filled.Login"
+                               Href="/login">
+                        เข้าสู่ระบบ
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+</MudContainer>
+
+@code {
+    private RequestModel requestModel = new();
+    private bool isLoading = false;
+    private bool showSuccess = false;
+
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+        try
+        {
+            var success = await RequestService.AddRequestAsync(requestModel);
+            if (success)
+            {
+                showSuccess = true;
+                requestModel = new RequestModel();
+                
+                Snackbar.Add("ส่งคำขออนุญาตสำเร็จ! 🎉", Severity.Success);
+                
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add("เกิดข้อผิดพลาดในการส่งคำขอ 😞", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"เกิดข้อผิดพลาด: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

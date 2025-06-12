@@ -1,0 +1,75 @@
+@page "/"
+@using MyApplication.Services
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@layout Layout.FullPageLayout
+
+<PageTitle>ขออนุญาตเมีย</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pt-16">
+    <MudPaper Elevation="3" Class="pa-8 text-center" Style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+        <MudStack Spacing="4" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.FavoriteBorder" Size="Size.Large" Color="Color.Secondary" Style="font-size: 5rem;" />
+            
+            <MudText Typo="Typo.h3" Color="Color.Secondary" Align="Align.Center">
+                💕 ยินดีต้อนรับสู่ระบบขออนุญาตเมีย
+            </MudText>
+
+            <MudText Typo="Typo.h6" Color="Color.Default" Align="Align.Center">
+                ระบบจัดการคำขออนุญาตออกไปข้างนอกแบบมีระเบียบ
+            </MudText>
+
+            <MudDivider />
+
+            <MudStack Spacing="3" AlignItems="AlignItems.Center">
+                @if (!AuthService.IsAuthenticated)
+                {
+                    <MudText Typo="Typo.body1" Align="Align.Center">
+                        กรุณาเข้าสู่ระบบเพื่อใช้งาน Dashboard และดูสถานะคำขอ
+                    </MudText>
+                    
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.Login"
+                               Href="/login">
+                        เข้าสู่ระบบ
+                    </MudButton>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body1" Align="Align.Center">
+                        ยินดีต้อนรับ <strong>@AuthService.CurrentUser?.DisplayName</strong>!
+                    </MudText>
+                    
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Success"
+                               Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.Dashboard"
+                               Href="/dashboard">
+                        ไปที่ Dashboard
+                    </MudButton>
+                }
+
+                <MudText Typo="Typo.body2" Align="Align.Center">
+                    หรือสามารถส่งคำขออนุญาตได้โดยไม่ต้องเข้าสู่ระบบ
+                </MudText>
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Send"
+                           Href="/request">
+                    💌 ขออนุญาตเมีย
+                </MudButton>
+            </MudStack>
+
+            <MudDivider />
+
+            <MudText Typo="Typo.caption" Color="Color.Default" Align="Align.Center">
+                "ความสุขของสามีอยู่ที่การได้รับอนุญาต... 
+                ไม่ใช่การออกไปข้างนอก" 😅
+            </MudText>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
