@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MyApplication.Attributes;
 
 namespace MyApplication.Models;
 
@@ -10,9 +11,11 @@ public class RequestModel
     public string Name { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "กรุณาเลือกวันที่")]
+    [DateFormat]
     public string Date { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "กรุณาใส่เวลา")]
+    [TimeFormat]
     public string Time { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "กรุณาใส่สถานที่")]
