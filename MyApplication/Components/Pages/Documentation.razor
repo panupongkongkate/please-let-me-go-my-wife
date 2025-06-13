@@ -1,8 +1,11 @@
 @page "/docs"
 @using MyApplication.Services
+@using Microsoft.JSInterop
 @inject AuthService AuthService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @layout MyApplication.Components.Layout.MainLayout
+@implements IAsyncDisposable
 
 <PageTitle>Documentation - ระบบขออนุญาตเมีย</PageTitle>
 
@@ -52,7 +55,7 @@
             </MudAlert>
 
             <!-- Tabs -->
-            <MudTabs Elevation="3" Rounded="true" Color="Color.Primary" PanelClass="pa-6">
+            <MudTabs Elevation="3" Rounded="true" Color="Color.Primary" PanelClass="pa-6" ActivePanelIndex="@activeTabIndex" ActivePanelIndexChanged="@OnTabChanged">
                 
                 <!-- API Documentation Tab -->
                 <MudTabPanel Text="🔗 API Documentation">
@@ -77,7 +80,8 @@
                                 <ChildContent>
                                     <MudStack Spacing="2">
                                         <MudText Typo="Typo.h6">POST /auth/login</MudText>
-                                        <MudCodeHighlight Language="json">
+                                        <MudPaper Class="pa-2" Style="background-color: #f5f5f5; font-family: 'Courier New', monospace;">
+                                            <pre style="margin: 0; white-space: pre-wrap;"><code>
 {
   "username": "string",
   "password": "string"
@@ -93,15 +97,18 @@ Response:
     "role": "เมีย"
   }
 }
-                                        </MudCodeHighlight>
+                                            </code></pre>
+                                        </MudPaper>
                                         
                                         <MudText Typo="Typo.h6">POST /auth/logout</MudText>
-                                        <MudCodeHighlight Language="json">
+                                        <MudPaper Class="pa-2" Style="background-color: #f5f5f5; font-family: 'Courier New', monospace;">
+                                            <pre style="margin: 0; white-space: pre-wrap;"><code>
 Response: 
 {
   "message": "Logged out successfully"
 }
-                                        </MudCodeHighlight>
+                                            </code></pre>
+                                        </MudPaper>
                                     </MudStack>
                                 </ChildContent>
                             </MudExpansionPanel>
@@ -117,7 +124,8 @@ Response:
                                     <MudStack Spacing="3">
                                         <MudText Typo="Typo.h6">GET /requests</MudText>
                                         <MudText Typo="Typo.body2">ดึงคำขอทั้งหมด (Admin เท่านั้น)</MudText>
-                                        <MudCodeHighlight Language="json">
+                                        <MudPaper Class="pa-2" Style="background-color: #f5f5f5; font-family: 'Courier New', monospace;">
+                                            <pre style="margin: 0; white-space: pre-wrap;"><code>
 Response:
 [
   {
@@ -131,14 +139,16 @@ Response:
     "createdDate": "2025-06-14T10:00:00Z"
   }
 ]
-                                        </MudCodeHighlight>
+                                            </code></pre>
+                                        </MudPaper>
 
                                         <MudText Typo="Typo.h6">GET /requests/user/{username}</MudText>
                                         <MudText Typo="Typo.body2">ดึงคำขอของผู้ใช้คนนั้น</MudText>
 
                                         <MudText Typo="Typo.h6">POST /requests</MudText>
                                         <MudText Typo="Typo.body2">สร้างคำขอใหม่</MudText>
-                                        <MudCodeHighlight Language="json">
+                                        <MudPaper Class="pa-2" Style="background-color: #f5f5f5; font-family: 'Courier New', monospace;">
+                                            <pre style="margin: 0; white-space: pre-wrap;"><code>
 {
   "name": "วัยวาย",
   "date": "2025-06-15",
@@ -152,11 +162,13 @@ Response:
   "id": 51,
   "message": "Request created successfully"
 }
-                                        </MudCodeHighlight>
+                                            </code></pre>
+                                        </MudPaper>
 
                                         <MudText Typo="Typo.h6">PUT /requests/{id}/status</MudText>
                                         <MudText Typo="Typo.body2">อัปเดตสถานะคำขอ (Admin เท่านั้น)</MudText>
-                                        <MudCodeHighlight Language="json">
+                                        <MudPaper Class="pa-2" Style="background-color: #f5f5f5; font-family: 'Courier New', monospace;">
+                                            <pre style="margin: 0; white-space: pre-wrap;"><code>
 {
   "status": "อนุมัติ" // หรือ "ไม่อนุญาต"
 }
@@ -165,7 +177,8 @@ Response:
 {
   "message": "Status updated successfully"
 }
-                                        </MudCodeHighlight>
+                                            </code></pre>
+                                        </MudPaper>
                                     </MudStack>
                                 </ChildContent>
                             </MudExpansionPanel>
@@ -181,7 +194,8 @@ Response:
                                     <MudStack Spacing="2">
                                         <MudText Typo="Typo.h6">GET /statistics/dashboard</MudText>
                                         <MudText Typo="Typo.body2">สถิติสำหรับ Admin Dashboard</MudText>
-                                        <MudCodeHighlight Language="json">
+                                        <MudPaper Class="pa-2" Style="background-color: #f5f5f5; font-family: 'Courier New', monospace;">
+                                            <pre style="margin: 0; white-space: pre-wrap;"><code>
 Response:
 {
   "totalRequests": 50,
@@ -198,7 +212,8 @@ Response:
     }
   ]
 }
-                                        </MudCodeHighlight>
+                                            </code></pre>
+                                        </MudPaper>
                                     </MudStack>
                                 </ChildContent>
                             </MudExpansionPanel>
@@ -225,14 +240,13 @@ Response:
 erDiagram
     USERS {
         int id PK
-        varchar username UK
+        varchar username UK  
         varchar password
         varchar display_name
         varchar role
         datetime created_date
         datetime updated_date
     }
-    
     REQUESTS {
         int id PK
         varchar name
@@ -246,7 +260,6 @@ erDiagram
         int created_by FK
         int approved_by FK
     }
-    
     REQUEST_HISTORY {
         int id PK
         int request_id FK
@@ -256,7 +269,6 @@ erDiagram
         datetime changed_date
         text comments
     }
-    
     SESSIONS {
         int id PK
         int user_id FK
@@ -264,7 +276,6 @@ erDiagram
         datetime expires_at
         datetime created_date
     }
-
     USERS ||--o{ REQUESTS : creates
     USERS ||--o{ REQUEST_HISTORY : changes
     USERS ||--o{ SESSIONS : has
@@ -373,7 +384,8 @@ erDiagram
                         <!-- Current JSON Structure -->
                         <MudPaper Class="pa-4" Elevation="2">
                             <MudText Typo="Typo.h6" Class="mb-3">📁 Current JSON File Structure</MudText>
-                            <MudCodeHighlight Language="json">
+                            <MudPaper Class="pa-2" Style="background-color: #f5f5f5; font-family: 'Courier New', monospace;">
+                                <pre style="margin: 0; white-space: pre-wrap;"><code>
 {
   "Requests": [
     {
@@ -389,7 +401,8 @@ erDiagram
   ],
   "NextId": 51
 }
-                            </MudCodeHighlight>
+                                </code></pre>
+                            </MudPaper>
                         </MudPaper>
                     </MudStack>
                 </MudTabPanel>
@@ -449,44 +462,25 @@ erDiagram
                             <div id="mermaid-flow">
                                 <pre class="mermaid">
 flowchart TD
-    A[👤 ผู้ใช้เข้าสู่ระบบ] --> B{🔐 Authentication}
-    B -->|ไม่ได้ Login| C[🏠 Home Page<br/>FullPageLayout]
-    B -->|Login สำเร็จ| D{👑 Check Role}
-    
-    D -->|เมีย| E[📊 Admin Dashboard<br/>MainLayout]
-    D -->|สามี| F[📝 User Dashboard<br/>MainLayout]
-    D -->|Guest| G[🚫 Limited Access]
-    
-    C --> H[🔑 Login Page<br/>FullPageLayout]
-    H --> I[💌 Request Form<br/>FullPageLayout]
-    
-    E --> J[📋 View All Requests]
-    E --> K[✅ Approve/Reject]
-    E --> L[📊 Statistics View]
-    E --> M[📚 Documentation]
-    
-    F --> N[📝 My Requests]
-    F --> O[💌 Create New Request]
-    F --> P[👁️ View Status]
-    
-    I --> Q[📤 Submit Request]
-    Q --> R[💾 Store in JSON]
-    R --> S[📧 Notification]
-    
-    J --> T{🤔 Decision}
-    T -->|Approve| U[✅ Status = อนุมัติ]
-    T -->|Reject| V[❌ Status = ไม่อนุญาต]
-    
-    U --> W[💾 Update JSON]
+    A[User Access] --> B{Authentication}
+    B -->|No Login| C[Home Page]
+    B -->|Login Success| D{Check Role}
+    D -->|Wife| E[Admin Dashboard]
+    D -->|Husband| F[User Dashboard]
+    D -->|Guest| G[Limited Access]
+    C --> H[Login Page]
+    H --> I[Request Form]
+    E --> J[View All Requests]
+    E --> K[Approve Reject]
+    F --> N[My Requests]
+    F --> O[Create New Request]
+    I --> Q[Submit Request]
+    Q --> R[Store in JSON]
+    J --> T{Decision}
+    T -->|Approve| U[Status Approved]
+    T -->|Reject| V[Status Rejected]
+    U --> W[Update JSON]
     V --> W
-    W --> X[📱 Notify User]
-    
-    style A fill:#e1f5fe
-    style E fill:#f3e5f5
-    style F fill:#e8f5e8
-    style I fill:#fff3e0
-    style U fill:#e8f5e8
-    style V fill:#ffebee
                                 </pre>
                             </div>
                         </MudPaper>
@@ -684,38 +678,12 @@ flowchart TD
                                         <div id="mermaid-lifecycle">
                                             <pre class="mermaid">
 stateDiagram-v2
-    [*] --> สร้างคำขอ : User/Guest ส่งฟอร์ม
-    สร้างคำขอ --> รอการอนุมัติ : Status = "รอ"
-    
-    รอการอนุมัติ --> อนุมัติ : เมียอนุมัติ
-    รอการอนุมัติ --> ไม่อนุญาต : เมียปฏิเสธ
-    
-    อนุมัติ --> [*] : สามีสามารถออกไปได้
-    ไม่อนุญาต --> [*] : สามีไม่สามารถออกไปได้
-    
-    note right of สร้างคำขอ
-        - บันทึกลง JSON file
-        - Auto-generated ID
-        - CreatedDate = now()
-    end note
-    
-    note right of รอการอนุมัติ
-        - แสดงในตาราง Admin
-        - สามีดูได้ใน Dashboard
-        - สถานะ: รอ
-    end note
-    
-    note right of อนุมัติ
-        - อัปเดต Status = "อนุมัติ"
-        - แสดง Snackbar สำเร็จ
-        - บันทึกการเปลี่ยนแปลง
-    end note
-    
-    note right of ไม่อนุญาต
-        - อัปเดต Status = "ไม่อนุญาต"
-        - แสดง Snackbar ปฏิเสธ
-        - บันทึกการเปลี่ยนแปลง
-    end note
+    [*] --> CreateRequest : User sends form
+    CreateRequest --> Pending : Status equals Waiting
+    Pending --> Approved : Wife approves
+    Pending --> Rejected : Wife rejects
+    Approved --> [*] : Husband can go out
+    Rejected --> [*] : Husband cannot go out
                                             </pre>
                                         </div>
                                     </MudPaper>
@@ -754,24 +722,101 @@ stateDiagram-v2
     </MudPaper>
 </MudContainer>
 
-<!-- Mermaid.js Script -->
+<!-- Load Mermaid.js from CDN (required for the module) -->
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
-<script>
-    mermaid.initialize({ startOnLoad: true, theme: 'default' });
-</script>
 
 @code {
-    protected override Task OnAfterRenderAsync(bool firstRender)
+    private IJSObjectReference? mermaidModule;
+    private int activeTabIndex = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Re-render mermaid diagrams after page load
-            InvokeAsync(async () =>
+            try
             {
-                await Task.Delay(500);
-                await InvokeAsync(StateHasChanged);
-            });
+                // Wait for mermaid library to load
+                await Task.Delay(2000);
+                
+                // Import the JavaScript module
+                mermaidModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "/modules/mermaidmodule.js");
+                
+                // Initialize mermaid
+                var initResult = await mermaidModule.InvokeAsync<bool>("Initialize");
+                Console.WriteLine($"Mermaid init result: {initResult}");
+                
+                if (initResult)
+                {
+                    await Task.Delay(500);
+                    // Render diagrams
+                    var renderResult = await mermaidModule.InvokeAsync<bool>("Render", "mermaid");
+                    Console.WriteLine($"Mermaid render result: {renderResult}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Mermaid module error: {ex.Message}");
+            }
         }
-        return base.OnAfterRenderAsync(firstRender);
+        else if (mermaidModule != null)
+        {
+            try
+            {
+                // Re-render on subsequent renders
+                await mermaidModule.InvokeVoidAsync("Render", "mermaid");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Mermaid re-render error: {ex.Message}");
+            }
+        }
+        
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task OnTabChanged(int newIndex)
+    {
+        activeTabIndex = newIndex;
+        StateHasChanged(); // Force re-render
+        
+        // Wait for the tab content to render, then re-render mermaid diagrams
+        await Task.Delay(1000); // เพิ่ม delay ให้เพียงพอ
+        
+        if (mermaidModule != null)
+        {
+            try
+            {
+                // Reset processing state for fresh rendering
+                await mermaidModule.InvokeAsync<bool>("ResetProcessing", "mermaid");
+                await Task.Delay(200);
+                
+                var renderResult = await mermaidModule.InvokeAsync<bool>("Render", "mermaid");
+                Console.WriteLine($"Tab {newIndex} - Mermaid render result: {renderResult}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Tab change mermaid error: {ex.Message}");
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (mermaidModule != null)
+        {
+            try
+            {
+                await mermaidModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Expected when circuit is being disposed
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error disposing mermaid module: {ex.Message}");
+            }
+        }
     }
 }
