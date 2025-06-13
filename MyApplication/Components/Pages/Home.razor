@@ -59,7 +59,7 @@
                            Color="Color.Secondary"
                            Size="Size.Large"
                            StartIcon="@Icons.Material.Filled.Send"
-                           Href="/request">
+                           Href="@(!AuthService.IsAuthenticated ? "/request-logged-in" : "/request")">
                     💌 ขออนุญาตเมีย
                 </MudButton>
             </MudStack>

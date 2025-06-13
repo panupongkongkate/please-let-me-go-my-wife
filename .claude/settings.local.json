@@ -12,7 +12,9 @@
       "Bash(grep:*)",
       "Bash(lsof:*)",
       "Bash(ss:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }

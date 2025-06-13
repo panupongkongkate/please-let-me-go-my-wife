@@ -100,7 +100,7 @@
                        Size="Size.Large"
                        FullWidth="true"
                        StartIcon="@Icons.Material.Filled.Send"
-                       Href="/request">
+                       Href="@(!AuthService.IsAuthenticated ? "/request-logged-in" : "/request")">
                 💌 ขออนุญาตเมีย
             </MudButton>
         </MudStack>
