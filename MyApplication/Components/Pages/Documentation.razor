@@ -70,7 +70,7 @@
 
                         <!-- Authentication -->
                         <MudExpansionPanels Elevation="3">
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isAuthPanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isAuthPanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.Security" class="mr-3" />
@@ -113,7 +113,7 @@ Response:
                                 </ChildContent>
                             </MudExpansionPanel>
 
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isRequestsPanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isRequestsPanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.Assignment" class="mr-3" />
@@ -183,7 +183,7 @@ Response:
                                 </ChildContent>
                             </MudExpansionPanel>
 
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isStatsPanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isStatsPanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.BarChart" class="mr-3" />
@@ -286,7 +286,7 @@ erDiagram
 
                         <!-- Tables Detail -->
                         <MudExpansionPanels Elevation="3">
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isUsersPanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isUsersPanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.Person" class="mr-3" />
@@ -316,7 +316,7 @@ erDiagram
                                 </ChildContent>
                             </MudExpansionPanel>
 
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isRequestsTablePanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isRequestsTablePanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.Assignment" class="mr-3" />
@@ -350,7 +350,7 @@ erDiagram
                                 </ChildContent>
                             </MudExpansionPanel>
 
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isHistoryPanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isHistoryPanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.History" class="mr-3" />
@@ -487,7 +487,7 @@ flowchart TD
 
                         <!-- Role Permissions -->
                         <MudExpansionPanels Elevation="3">
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isRolesPanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isRolesPanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.Security" class="mr-3" />
@@ -577,7 +577,7 @@ flowchart TD
                                 </ChildContent>
                             </MudExpansionPanel>
 
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isRoutesPanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isRoutesPanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.Route" class="mr-3" />
@@ -666,7 +666,7 @@ flowchart TD
                                 </ChildContent>
                             </MudExpansionPanel>
 
-                            <MudExpansionPanel>
+                            <MudExpansionPanel IsExpanded="isLifecyclePanelExpanded" IsExpandedChanged="(expanded) => { if (expanded) isLifecyclePanelExpanded = true; }">
                                 <TitleContent>
                                     <div style="display: flex; align-items: center;">
                                         <MudIcon Icon="@Icons.Material.Filled.Timeline" class="mr-3" />
@@ -728,6 +728,17 @@ stateDiagram-v2
 @code {
     private IJSObjectReference? mermaidModule;
     private int activeTabIndex = 0;
+    
+    // Panel expansion states - once expanded, cannot be collapsed
+    private bool isAuthPanelExpanded = false;
+    private bool isRequestsPanelExpanded = false;
+    private bool isStatsPanelExpanded = false;
+    private bool isUsersPanelExpanded = false;
+    private bool isRequestsTablePanelExpanded = false;
+    private bool isHistoryPanelExpanded = false;
+    private bool isRolesPanelExpanded = false;
+    private bool isRoutesPanelExpanded = false;
+    private bool isLifecyclePanelExpanded = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

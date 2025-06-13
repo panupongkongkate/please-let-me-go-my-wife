@@ -9,7 +9,10 @@
       "Bash(mkdir:*)",
       "Bash(dotnet add package:*)",
       "Bash(dotnet run)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(lsof:*)",
+      "Bash(ss:*)",
+      "Bash(kill:*)"
     ],
     "deny": []
   }

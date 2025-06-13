@@ -23,6 +23,7 @@ builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<RequestService>();
 
 // Add services to the container.
+builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -39,11 +40,16 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseRouting();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.UseRouting();
+app.MapFallback(context => 
+{
+    context.Response.Redirect("/404");
+    return Task.CompletedTask;
+});
 
 app.Run();
